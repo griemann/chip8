@@ -1,5 +1,8 @@
 import pygame as pg
 from random import randint
+
+from keyboard import Keyboard
+from screen import Screen
 from sprites import SPRITES
 
 class CPU:
@@ -19,6 +22,9 @@ class CPU:
         self.sound_timer = 0
 
         self.curr_op = 0x00e0
+        
+        self.screen = None
+        self.keyboard = Keyboard()
 
     def load_rom(self, rom: bytes) -> None:
         for i in range(len(bytes)):
@@ -286,14 +292,18 @@ class CPU:
         Ex9E - SKP Vx
         Skip next instruction if key with the value of Vx is pressed.
         """
-        pass
+        x = (self.curr_op & 0x0f00) >> 8
+        if self.keyboard.is_pressed(x):
+            self.pc += 2
 
     def skip_if_not_key_press(self) -> None:
         """
         ExA1 - SKNP Vx
         Skip next instruction if key with the value of Vx is not pressed.
         """
-        pass
+        x = (self.curr_op & 0x0f00) >> 8
+        if not self.keyboard.is_pressed(x):
+            self.pc += 2
 
     def load_delay_val_to_reg(self) -> None:
         """
@@ -309,7 +319,9 @@ class CPU:
         Wait for a key press, store the value of the key in Vx.
         """
         x = (self.curr_op & 0x0f00) >> 8
-        pass
+        pressed_key = self.keyboard.is_any_pressed()
+        if pressed_key is not None:
+            self.v[x] = pressed_key
 
     def set_delay_timer(self) -> None:
         """
