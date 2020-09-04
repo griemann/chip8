@@ -21,10 +21,30 @@ class CPU:
         self.delay_timer = 0
         self.sound_timer = 0
 
-        self.curr_op = 0x00e0
-        
         self.screen = None
         self.keyboard = Keyboard()
+
+        self.curr_op = 0x00e0
+        self.load_sprites()
+
+        self.op_table = {
+            0x0: self.clr,
+            0x1: self.jump_to_address,
+            0x2: self.jump_to_subroutine,
+            0x3: self.skip_if_reg_eq_val,
+            0x4: self.skip_if_reg_neq_val,
+            0x5: self.skip_if_reg_eq_reg,
+            0x6: self.load_to_reg,
+            0x7: self.add_val_to_reg,
+            0x8: None, # execute logical ops
+            0x9: self.skip_if_reg_neq_reg,
+            0xA: self.load_index_reg,
+            0xB: self.self.jump_to_addr_offset,
+            0xC: self.gen_random_number,
+            0xD: self.draw_sprite,
+            0xE: None, #keyboard ops
+            0xF: None, #misc ops
+        }
 
     def load_rom(self, rom: bytes) -> None:
         for i in range(len(bytes)):
@@ -255,7 +275,7 @@ class CPU:
         if self.v[x] != self.v[y]:
             self.pc += 2
 
-    def set_index_reg(self) -> None:
+    def load_index_reg(self) -> None:
         """
         Annn - LD I, addr
         Set I = nnn.

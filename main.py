@@ -1,6 +1,21 @@
 #!/bin/python3
+import pygame as pg
+import sys
 
-def main():
+from cpu import CPU
+
+def main(rom_path):
     # initialize cpu
+    cpu = CPU()
 
-    pass
+    rom = open(rom_path, 'rb')
+    rom_bytes = rom.read()
+    rom.close()
+
+    cpu.load_rom(rom_bytes)
+    
+
+
+
+if __name__ == '__main__':
+    main(sys.argv[1])
