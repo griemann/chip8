@@ -13,9 +13,11 @@ def main(rom_path):
     rom.close()
 
     cpu.load_rom(rom_bytes)
-    
-
-
+    val = 0
+    while val < 20:
+        cpu.exec()
+        print(cpu)
+        val += 1
 
 if __name__ == '__main__':
     main(sys.argv[1])

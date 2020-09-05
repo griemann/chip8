@@ -28,7 +28,7 @@ class CPU:
         self.load_sprites()
 
         self.op_table = {
-            0x0: self.clr,
+            0x0: self.clr_ret,
             0x1: self.jump_to_address,
             0x2: self.jump_to_subroutine,
             0x3: self.skip_if_reg_eq_val,
@@ -39,15 +39,19 @@ class CPU:
             0x8: None, # execute logical ops
             0x9: self.skip_if_reg_neq_reg,
             0xA: self.load_index_reg,
-            0xB: self.self.jump_to_addr_offset,
+            0xB: self.jump_to_addr_offset,
             0xC: self.gen_random_number,
             0xD: self.draw_sprite,
             0xE: None, #keyboard ops
             0xF: None, #misc ops
         }
 
+    def __str__(self) -> str:
+        s = 'PC: {:04X}  OP: {:04X}'.format(self.pc - 2, self.curr_op)
+        return s
+
     def load_rom(self, rom: bytes) -> None:
-        for i in range(len(bytes)):
+        for i in range(len(rom)):
             self.memory[0x200 + i] = rom[i]
 
     def load_sprites(self) -> None:
@@ -58,18 +62,19 @@ class CPU:
         """
         Execute the current instruction, then advance the program.
         """
-        pass
         self.step()
+        instruction_bits = (self.curr_op & 0xf000) >> 12
+        self.op_table[instruction_bits]()
 
     def step(self) -> None:
         """
         Fetch next instruction.
         """
         self.curr_op = self.memory[self.pc] << 8
-        self.curr_op = self.curr_op & self.memory[self.pc + 1]
+        self.curr_op += self.memory[self.pc + 1]
         self.pc += 2
 
-    def clr(self) -> None:
+    def clr_ret(self) -> None:
         """
         00E0 - CLS
         Clear the display.
@@ -78,10 +83,10 @@ class CPU:
 
         if operation == 0xe0:
             # clear display
+            print()
             pass
         elif operation == 0xee:
-            # return
-            pass
+            self.return_from_subroutine()
 
     def return_from_subroutine(self) -> None:
         """
