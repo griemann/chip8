@@ -21,7 +21,7 @@ class CPU:
         self.delay_timer = 0
         self.sound_timer = 0
 
-        self.screen = None
+        self.screen = Sreen()
         self.keyboard = Keyboard()
 
         self.curr_op = 0x00e0
@@ -36,14 +36,40 @@ class CPU:
             0x5: self.skip_if_reg_eq_reg,
             0x6: self.load_to_reg,
             0x7: self.add_val_to_reg,
-            0x8: None, # execute logical ops
+            0x8: self.exec_logical_ops,
             0x9: self.skip_if_reg_neq_reg,
             0xA: self.load_index_reg,
             0xB: self.jump_to_addr_offset,
             0xC: self.gen_random_number,
             0xD: self.draw_sprite,
-            0xE: None, #keyboard ops
+            0xE: self.keyboard_ops,
             0xF: None, #misc ops
+        }
+
+        # ALU operations for when the operand starts with 8.
+        # The last hex digit determines which operation to perform.
+        self.logical_op_table = {
+            0x0: self.load_reg_to_reg,
+            0x1: self.logical_or,
+            0x2: self.logical_and,
+            0x3: self.exclusive_or,
+            0x4: self.add_reg_to_reg,
+            0x5: self.subtract_reg_from_reg,
+            0x6: self.right_shift_reg,
+            0x7: self.subtract_reg_from_reg_n,
+            0xe: self.left_shift_reg
+        }
+
+        self.misc_table = {
+            0x07: self.load_delay_val_to_reg,
+            0x0A: self.wait_for_key,
+            0x15: self.set_delay_timer,
+            0x18: self.set_sound_timer,
+            0x1e: self.add_to_index,
+            0x29: self.load_sprite_to_index,
+            0x33: self.store_bcd_in_memory,
+            0x55: self.store_regs_in_memory,
+            0x65: self.load_regs_from_memory
         }
 
     def __str__(self) -> str:
@@ -74,6 +100,22 @@ class CPU:
         self.curr_op += self.memory[self.pc + 1]
         self.pc += 2
 
+    def exec_logical_ops(self):
+        """
+        The opcodes for logical instructions have 0x8 as their
+        left-most hex digit.
+        """
+        operation = self.curr_op & 0x000f
+        self.logical_op_table[operation]()
+
+    def exec_misc_ops(self):
+        """
+        The opcodes for logical instructions have 0xF as their
+        left-most hex digit.
+        """
+        operation = self.curr_op & 0x00ff
+        self.misc_table[operation]()
+        
     def clr_ret(self) -> None:
         """
         00E0 - CLS
@@ -170,7 +212,7 @@ class CPU:
         # we take mod 256 since the value stored is 8-bit only
         self.v[x] = (self.v[x] + val) % 256
 
-    def copy_reg(self) -> None:
+    def load_reg_to_reg(self) -> None:
         """
         8xy0 - LD Vx, Vy
         Set Vx = Vy.
@@ -311,6 +353,14 @@ class CPU:
         set VF = collision.
         """
         pass
+    
+    def keyboard_ops(self) -> None:
+        operation = self.curr_op & 0x00FF
+        if operation == 0x9e:
+            self.skip_if_key_press()
+        
+        if operation == 0xa1:
+            self.skip_if_not_key_press()
 
     def skip_if_key_press(self) -> None:
         """
@@ -401,7 +451,7 @@ class CPU:
         for n in range(x + 1):
             self.memory[self.i + n] = self.v[n]
         
-    def read_regs_from_memory(self) -> None:
+    def load_regs_from_memory(self) -> None:
         """
         Fx65 - LD Vx, [I]
         Read registers V0 through Vx from memory starting at location I.

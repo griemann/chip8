@@ -1,4 +1,4 @@
-#!/bin/python3
+
 import pygame as pg
 import sys
 
@@ -20,4 +20,7 @@ def main(rom_path):
         val += 1
 
 if __name__ == '__main__':
-    main(sys.argv[1])
+    if len(sys.argv) > 1:
+        main(sys.argv[1])
+    else:
+        main('./roms/ibm.ch8')
