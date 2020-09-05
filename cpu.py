@@ -21,7 +21,7 @@ class CPU:
         self.delay_timer = 0
         self.sound_timer = 0
 
-        self.screen = Sreen()
+        self.screen = Screen()
         self.keyboard = Keyboard()
 
         self.curr_op = 0x00e0
@@ -115,7 +115,7 @@ class CPU:
         """
         operation = self.curr_op & 0x00ff
         self.misc_table[operation]()
-        
+
     def clr_ret(self) -> None:
         """
         00E0 - CLS
