@@ -2,7 +2,7 @@ import pygame as pg
 from random import randint
 
 from keyboard import Keyboard
-from screen import Screen
+from screen import Screen, COLOURS
 from sprites import SPRITES
 
 class CPU:
@@ -43,7 +43,7 @@ class CPU:
             0xC: self.gen_random_number,
             0xD: self.draw_sprite,
             0xE: self.keyboard_ops,
-            0xF: None, #misc ops
+            0xF: self.exec_misc_ops
         }
 
         # ALU operations for when the operand starts with 8.
@@ -124,9 +124,7 @@ class CPU:
         operation = self.curr_op & 0x00ff
 
         if operation == 0xe0:
-            # clear display
-            print()
-            pass
+            self.screen.clear()
         elif operation == 0xee:
             self.return_from_subroutine()
 
@@ -352,8 +350,13 @@ class CPU:
         Display n-byte sprite starting at memory location I at (Vx, Vy),
         set VF = collision.
         """
-        pass
-    
+        total_sprite_bytes = self.curr_op & 0x000f
+        x_offset = self.v[(self.curr_op & 0x0f00) >> 8]
+        y_offset = self.v[(self.curr_op & 0x00f0) >> 4]
+        for row_no in range(total_sprite_bytes):
+            for col_no in range(8):
+                self.screen.draw_pixel(col_no + x_offset, row_no + y_offset, 1)
+
     def keyboard_ops(self) -> None:
         operation = self.curr_op & 0x00FF
         if operation == 0x9e:

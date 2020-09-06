@@ -5,6 +5,7 @@ import sys
 from cpu import CPU
 
 def main(rom_path):
+    pg.init()
     # initialize cpu
     cpu = CPU()
 
@@ -14,10 +15,19 @@ def main(rom_path):
 
     cpu.load_rom(rom_bytes)
     val = 0
-    while val < 20:
+    cont = True
+    prompt = None
+    while True:
         cpu.exec()
         print(cpu)
         val += 1
+        cont = not cont
+        while not cont:
+            prompt = input()
+            if prompt is not None:
+                cont = not cont
+        prompt = None
+
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
