@@ -1,8 +1,7 @@
-import pygame as pg
 from random import randint
 
 from keyboard import Keyboard
-from screen import Screen, COLOURS
+from screen import Screen
 from sprites import SPRITES
 
 class CPU:
@@ -151,7 +150,7 @@ class CPU:
         2nnn - CALL addr
         Call subroutine at nnn.
 
-        Increment the stack pointer, then put the current PC on the top of the 
+        Increment the stack pointer, then put the current PC on the top of the
         stack. The PC is then set to nnn.
         """
         self.sp += 2
@@ -168,7 +167,7 @@ class CPU:
 
         if self.v[x] == val:
             self.pc += 2
-    
+
     def skip_if_reg_neq_val(self) -> None:
         """
         4xkk - SNE Vx, byte
@@ -224,7 +223,7 @@ class CPU:
         8xy1 - OR Vx, Vy
         Set Vx = Vx OR Vy.
         """
-        x = (self.curr_op & 0x0f00) >> 8 
+        x = (self.curr_op & 0x0f00) >> 8
         y = (self.curr_op & 0x00f0) >> 4
         self.v[x] |= self.v[y]
 
@@ -233,7 +232,7 @@ class CPU:
         8xy2 - AND Vx, Vy
         Set Vx = Vx AND Vy.
         """
-        x = (self.curr_op & 0x0f00) >> 8 
+        x = (self.curr_op & 0x0f00) >> 8
         y = (self.curr_op & 0x00f0) >> 4
         self.v[x] &= self.v[y]
 
@@ -242,7 +241,7 @@ class CPU:
         8xy3 - XOR Vx, Vy
         Set Vx = Vx XOR Vy.
         """
-        x = (self.curr_op & 0x0f00) >> 8 
+        x = (self.curr_op & 0x0f00) >> 8
         y = (self.curr_op & 0x00f0) >> 4
         self.v[x] ^= self.v[y]
 
@@ -251,10 +250,10 @@ class CPU:
         8xy4 - ADD Vx, Vy
         Set Vx = Vx + Vy, set VF = carry.
         """
-        x = (self.curr_op & 0x0f00) >> 8 
+        x = (self.curr_op & 0x0f00) >> 8
         y = (self.curr_op & 0x00f0) >> 4
         self.v[x] += self.v[y]
-        
+
         if self.v[x] > 255:
             self.v[x] = self.v[x] % 256
             self.v[0xf] = 1
@@ -266,14 +265,14 @@ class CPU:
         If Vx > Vy, then VF is set to 1, otherwise 0. Then Vy is subtracted from
         Vx, and the results stored in Vx.
         """
-        x = (self.curr_op & 0x0f00) >> 8 
+        x = (self.curr_op & 0x0f00) >> 8
         y = (self.curr_op & 0x00f0) >> 4
 
         if self.v[x] > self.v[y]:
             self.v[0xf] = 1
         else:
             self.v[0xf] = 0
-        
+
         self.v[x] = (self.v[x] - self.v[y]) % 256
 
     def right_shift_reg(self) -> None:
@@ -290,7 +289,7 @@ class CPU:
         8xy7 - SUBN Vx, Vy
         Set Vx = Vy - Vx, set VF = NOT borrow.
         """
-        x = (self.curr_op & 0x0f00) >> 8 
+        x = (self.curr_op & 0x0f00) >> 8
         y = (self.curr_op & 0x00f0) >> 4
 
         if self.v[y] > self.v[x]:
@@ -314,7 +313,7 @@ class CPU:
         9xy0 - SNE Vx, Vy
         Skip next instruction if Vx != Vy.
         """
-        x = (self.curr_op & 0x0f00) >> 8 
+        x = (self.curr_op & 0x0f00) >> 8
         y = (self.curr_op & 0x00f0) >> 4
 
         if self.v[x] != self.v[y]:
@@ -350,12 +349,25 @@ class CPU:
         Display n-byte sprite starting at memory location I at (Vx, Vy),
         set VF = collision.
         """
+        self.v[0xf] = 0x0
+
         total_sprite_bytes = self.curr_op & 0x000f
         x_offset = self.v[(self.curr_op & 0x0f00) >> 8]
         y_offset = self.v[(self.curr_op & 0x00f0) >> 4]
         for row_no in range(total_sprite_bytes):
             for col_no in range(8):
-                self.screen.draw_pixel(col_no + x_offset, row_no + y_offset, 1)
+                x_target = col_no + x_offset
+                y_target = row_no + y_offset
+
+                curr_colour = self.screen.get_pixel(x_target, y_target)
+                colour = self.memory[self.i + row_no] >> (7 - col_no)
+                colour = colour & 0x1
+
+                if curr_colour and colour:
+                    self.v[0xf] = 1
+
+                self.screen.draw_pixel(x_target, y_target, colour ^ curr_colour)
+                self.screen.update_frame()
 
     def keyboard_ops(self) -> None:
         operation = self.curr_op & 0x00FF
@@ -453,7 +465,7 @@ class CPU:
         x = (self.curr_op & 0x0f00) >> 8
         for n in range(x + 1):
             self.memory[self.i + n] = self.v[n]
-        
+
     def load_regs_from_memory(self) -> None:
         """
         Fx65 - LD Vx, [I]

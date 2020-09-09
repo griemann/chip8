@@ -21,7 +21,7 @@ def main(rom_path):
         cpu.exec()
         print(cpu)
         val += 1
-        cont = not cont
+        #cont = not cont
         while not cont:
             prompt = input()
             if prompt is not None:
@@ -34,3 +34,6 @@ if __name__ == '__main__':
         main(sys.argv[1])
     else:
         main('./roms/ibm.ch8')
+
+    pg.quit()
+    

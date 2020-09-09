@@ -5,11 +5,13 @@ WHITE = (0xFF, 0xFF, 0xFF)
 COLOURS = [BLACK, WHITE] #COLOURS[0] is the background, COLOURS[1] is the pixel colour.
 
 class Screen:
-    def __init__(self, scale: int=8) -> None:
+    def __init__(self, scale: int=16) -> None:
         self.cols = 64
         self.rows = 32
         self.scale = scale
-        self.surface = pg.display.set_mode((self.cols * self.scale, self.rows * self.scale), pg.HWSURFACE|pg.DOUBLEBUF|pg.RESIZABLE)
+        self.vram = bytearray(self.cols * self.rows)
+        self.surface = pg.display.set_mode((self.cols * self.scale,
+            self.rows * self.scale), pg.HWSURFACE|pg.DOUBLEBUF|pg.RESIZABLE)
 
         self.clear()
 
@@ -21,15 +23,21 @@ class Screen:
         coords = pg.Rect(x * self.scale, y * self.scale, self.scale, self.scale)
         self.surface.fill(COLOURS[colour], coords)
 
-        self.draw_frame()
+    def get_pixel(self, x: int, y: int) -> int:
+        pixel = self.surface.get_at((x * self.scale, y * self.scale))
+        if pixel == COLOURS[0]:
+            colour = 0
+        else:
+            colour = 1
+        return colour
 
     def clear(self):
         self.surface.fill(COLOURS[0])
 
     @staticmethod
-    def draw_frame() -> None:
+    def update_frame() -> None:
         """
-        Draw a new frame.
+        Paint a new frame
         """
         pg.display.flip()
 
