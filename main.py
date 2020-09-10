@@ -1,6 +1,7 @@
 
 import pygame as pg
 import sys
+import time
 
 from cpu import CPU
 
@@ -14,26 +15,23 @@ def main(rom_path):
     rom.close()
 
     cpu.load_rom(rom_bytes)
-    val = 0
-    cont = True
-    prompt = None
-    while True:
-        cpu.exec()
-        print(cpu)
-        val += 1
-        #cont = not cont
-        while not cont:
-            prompt = input()
-            if prompt is not None:
-                cont = not cont
-        prompt = None
 
+    t = 0
+    while True:
+        print(cpu)
+
+        t = time.time()
+        cpu.exec()
+
+        dt = time.time() - t
+        if dt < 1/60:
+            time.sleep(1/60 - dt)
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         main(sys.argv[1])
     else:
-        main('./roms/ibm.ch8')
+        main('./roms/test_opcode.ch8')
 
     pg.quit()
     
