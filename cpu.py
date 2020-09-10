@@ -253,11 +253,13 @@ class CPU:
         """
         x = (self.curr_op & 0x0f00) >> 8
         y = (self.curr_op & 0x00f0) >> 4
-        self.v[x] += self.v[y]
+        val = self.v[x] + self.v[y]
 
-        if self.v[x] > 255:
+        if val > 255:
             self.v[x] = self.v[x] % 256
             self.v[0xf] = 1
+        else:
+            self.v[x] = val
 
     def subtract_reg_from_reg(self) -> None:
         """
