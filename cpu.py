@@ -308,7 +308,7 @@ class CPU:
         Set Vx = Vx SHL 1. Store the shifted bit in VF
         """
         x = (self.curr_op & 0x0f00) >> 8
-        self.v[0xf] = self.v[0xf] & 0b10000000
+        self.v[0xf] = (self.v[0xf] & 0b10000000) >>7
         self.v[x] = (self.v[x] << 1) & 0xff
 
     def skip_if_reg_neq_reg(self) -> None:
