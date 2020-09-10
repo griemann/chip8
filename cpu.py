@@ -13,10 +13,8 @@ class CPU:
         self.i = 0x0000
         # program counter, 16-bit
         self.pc = 0x0200
-        # stack pointer, 8-bit
-        self.sp = 0x00
-        # the stack holds 16 16-bit values
-        self.stack = bytearray(16 * 2)
+        # stack pointer, 8-bit. Starts in memory after the sprite data.
+        self.sp = 0x52
         self.delay_timer = 0
         self.sound_timer = 0
 
@@ -134,9 +132,10 @@ class CPU:
         of the stack, then subtracts 1 from the stack pointer.
         """
         self.sp -= 1
-        self.pc = self.stack[self.sp]
+        right_byte = self.memory[self.sp]
         self.sp -= 1
-        self.pc = self.pc & (self.stack[self.sp] << 8)
+        left_byte = self.memory[self.sp] << 8
+        self.pc = left_byte + right_byte
 
     def jump_to_address(self) -> None:
         """
@@ -153,8 +152,10 @@ class CPU:
         Increment the stack pointer, then put the current PC on the top of the
         stack. The PC is then set to nnn.
         """
-        self.sp += 2
-        self.stack[self.sp] = self.pc
+        self.memory[self.sp] = (self.pc & 0xff00) >> 8
+        self.sp += 1
+        self.memory[self.sp] = self.pc & 0x00ff
+        self.sp += 1
         self.pc = self.curr_op & 0x0fff
 
     def skip_if_reg_eq_val(self) -> None:
@@ -367,7 +368,7 @@ class CPU:
                     self.v[0xf] = 1
 
                 self.screen.draw_pixel(x_target, y_target, colour ^ curr_colour)
-                self.screen.update_frame()
+        self.screen.update_frame()
 
     def keyboard_ops(self) -> None:
         operation = self.curr_op & 0x00FF

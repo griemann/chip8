@@ -20,6 +20,8 @@ class Screen:
         pass
 
     def draw_pixel(self, x: int, y: int, colour: int) -> None:
+        x = x % self.cols
+        y = y % self.rows
         coords = pg.Rect(x * self.scale, y * self.scale, self.scale, self.scale)
         self.surface.fill(COLOURS[colour], coords)
 
